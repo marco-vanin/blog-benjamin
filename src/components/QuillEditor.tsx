@@ -1,88 +1,103 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import "@/styles/quill.css";
 import { createPost, updatePost, getPostById } from "@/actions/postAction";
 import CategorySelect from "./CategorySelect";
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { TOOLBAR_OPTIONS } from "../../constants/quill.constants";
 
 interface Props {
   categories: { id: string; name: string }[];
 }
 
-const QuillEditor = ({ categories }: Props) => {
+const QuillEditor: React.FC<Props> = ({ categories }) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const quillRef = useRef<Quill | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const postId = searchParams.get("id");
+  const router = useRouter();
+  const { toast } = useToast();
 
+  const handleCancel = useCallback(() => {
+    toast({
+      title: postId ? "Modification annulée" : "Création annulée",
+      description: postId
+        ? "Aucune modification n'a été apportée."
+        : "Le post n'a pas été créé.",
+    });
+    router.push("/admin");
+  }, [postId, router, toast]);
+
+  // Initialisation de l'éditeur Quill (monté une seule fois)
   useEffect(() => {
-    const editor = document.createElement("div");
-    const currentEditorRef = editorRef.current;
-    const toolbarOptions = [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      [{ font: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["bold", "italic", "underline"],
-      [{ color: [] }, { background: [] }],
-      [{ align: [] }],
-      ["clean"],
-    ];
-
-    if (currentEditorRef) {
-      currentEditorRef.appendChild(editor);
-      const quill = new Quill(editor, {
-        theme: "snow",
-        modules: {
-          toolbar: toolbarOptions,
-        },
-      });
-
-      quill.on("text-change", () => {
-        setContent(quill.root.innerHTML);
-      });
-
-      // Load post content if postId is present
-      if (postId) {
-        const loadPost = async () => {
-          const post = await getPostById(postId);
-          if (post) {
-            setTitle(post.title);
-            setContent(post.content);
-            setCategoryId(post.categoryId);
-            quill.clipboard.dangerouslyPasteHTML(post.content);
-          }
-        };
-        loadPost();
-      }
-    }
+    if (!editorRef.current || quillRef.current) return;
+    const editorDiv = document.createElement("div");
+    editorRef.current.appendChild(editorDiv);
+    quillRef.current = new Quill(editorDiv, {
+      theme: "snow",
+      modules: { toolbar: TOOLBAR_OPTIONS },
+    });
+    quillRef.current.on("text-change", () =>
+      setContent(quillRef.current?.root.innerHTML || "")
+    );
 
     return () => {
-      if (currentEditorRef) {
-        currentEditorRef.innerHTML = "";
+      // Nettoyage lors du démontage du composant
+      if (editorRef.current) {
+        editorRef.current.innerHTML = "";
       }
     };
+  }, []);
+
+  // Chargement du contenu du post si postId est présent
+  useEffect(() => {
+    if (!postId || !quillRef.current) return;
+    (async () => {
+      const post = await getPostById(postId);
+      if (post) {
+        setTitle(post.title);
+        setContent(post.content);
+        setCategoryId(post.categoryId);
+        quillRef.current!.clipboard.dangerouslyPasteHTML(post.content);
+      }
+    })();
   }, [postId]);
 
   const handleSave = async () => {
-    try {
-      if (!categoryId) throw new Error("Category is required");
+    if (!categoryId) {
+      toast({ title: "Erreur", description: "La catégorie est requise." });
+      return;
+    }
 
+    try {
       if (postId) {
-        // Update existing post
-        const result = await updatePost(postId, { title, content, categoryId });
-        console.log(result);
+        await updatePost(postId, { title, content, categoryId });
+        toast({
+          title: "Post modifié",
+          description: "Le post a été modifié avec succès.",
+        });
       } else {
-        // Create new post
-        const result = await createPost({ title, content, categoryId });
-        console.log(result);
+        await createPost({ title, content, categoryId });
+        toast({
+          title: "Post créé",
+          description: "Le post a été créé avec succès.",
+        });
       }
+      router.push("/admin");
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la sauvegarde.",
+      });
     }
   };
 
@@ -90,7 +105,7 @@ const QuillEditor = ({ categories }: Props) => {
     <div>
       <input
         type="text"
-        placeholder="Post Title"
+        placeholder="Titre du post"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="mb-4 p-2 border rounded"
@@ -102,13 +117,14 @@ const QuillEditor = ({ categories }: Props) => {
         setCategoryId={setCategoryId}
       />
 
-      <div ref={editorRef} className="quill-editor mb-4"></div>
-      <button
-        onClick={handleSave}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Save Post
-      </button>
+      <div ref={editorRef} className="quill-editor mb-4" />
+
+      <div className="flex gap-2">
+        <Button onClick={handleSave}>Sauvegarder</Button>
+        <Button onClick={handleCancel} variant="outline">
+          Annuler
+        </Button>
+      </div>
     </div>
   );
 };
