@@ -1,8 +1,8 @@
-import { pgTable, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
 // Table des utilisateurs
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").notNull().primaryKey().defaultRandom().unique(),
   username: text("username").unique().notNull(),
   email: text("email").unique().notNull(),
   passwordHash: text("password_hash").notNull(),
@@ -11,16 +11,16 @@ export const users = pgTable("users", {
 
 // Table des catégories
 export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").notNull().primaryKey().defaultRandom().unique(),
   name: text("name").unique().notNull(),
 });
 
 // Table des articles
 export const posts = pgTable("posts", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").notNull().primaryKey().defaultRandom().unique(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  categoryId: serial("category_id").references(() => categories.id),
+  categoryId: uuid("category_id").references(() => categories.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   published: boolean("published").default(false).notNull(),
@@ -28,9 +28,9 @@ export const posts = pgTable("posts", {
 
 // Table des commentaires
 export const comments = pgTable("comments", {
-  id: serial("id").primaryKey(),
-  postId: serial("post_id").references(() => posts.id),
-  userId: serial("user_id").references(() => users.id),
+  id: uuid("id").notNull().primaryKey().defaultRandom().unique(),
+  postId: uuid("post_id").references(() => posts.id),
+  userId: uuid("user_id").references(() => users.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
