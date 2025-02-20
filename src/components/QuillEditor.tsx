@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 import "@/styles/quill.css";
-import { createPost } from "@/actions/postAction";
+import { createPost, updatePost, getPostById } from "@/actions/postAction";
 import CategorySelect from "./CategorySelect";
 
 interface Props {
@@ -16,6 +17,8 @@ const QuillEditor = ({ categories }: Props) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const postId = searchParams.get("id");
 
   useEffect(() => {
     const editor = document.createElement("div");
@@ -42,6 +45,20 @@ const QuillEditor = ({ categories }: Props) => {
       quill.on("text-change", () => {
         setContent(quill.root.innerHTML);
       });
+
+      // Load post content if postId is present
+      if (postId) {
+        const loadPost = async () => {
+          const post = await getPostById(postId);
+          if (post) {
+            setTitle(post.title);
+            setContent(post.content);
+            setCategoryId(post.categoryId);
+            quill.clipboard.dangerouslyPasteHTML(post.content);
+          }
+        };
+        loadPost();
+      }
     }
 
     return () => {
@@ -49,14 +66,21 @@ const QuillEditor = ({ categories }: Props) => {
         currentEditorRef.innerHTML = "";
       }
     };
-  }, []);
+  }, [postId]);
 
   const handleSave = async () => {
     try {
       if (!categoryId) throw new Error("Category is required");
 
-      const result = await createPost({ title, content, categoryId });
-      console.log(result);
+      if (postId) {
+        // Update existing post
+        const result = await updatePost(postId, { title, content, categoryId });
+        console.log(result);
+      } else {
+        // Create new post
+        const result = await createPost({ title, content, categoryId });
+        console.log(result);
+      }
     } catch (error) {
       console.log(error);
     }
