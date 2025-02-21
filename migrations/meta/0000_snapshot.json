@@ -1,5 +1,5 @@
 {
-  "id": "4044ab7f-f3e0-43c3-b91b-d42b046586d1",
+  "id": "a1863d9e-8984-4c3b-9d3e-417c01ec871a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -229,11 +229,19 @@
           "primaryKey": false,
           "notNull": true
         },
-        "password_hash": {
-          "name": "password_hash",
+        "password": {
+          "name": "password",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'USER'"
         },
         "created_at": {
           "name": "created_at",

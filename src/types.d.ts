@@ -17,3 +17,10 @@ interface PostParams {
 interface CategorieParams {
   name: string;
 }
+interface AuthCredentials {
+  email: string;
+  password: string;
+  username: string;
+}
+
+type Role = "USER" | "ADMIN";
