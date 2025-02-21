@@ -5,7 +5,7 @@ import db from "@/database";
 import { users } from "@/database/schemas";
 import { eq } from "drizzle-orm";
 
-export const getCurrentUser = async () => {
+export const getCurrentUser = async (): Promise<User | null> => {
   const session = await auth();
 
   if (!session || !session.user) {
