@@ -2,12 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,24 +18,19 @@ interface Props {
 const PostCard = ({ post }: Props) => {
   const router = useRouter();
 
-  const handleEdit = () => {
-    router.push(`/editor?id=${post.id}`);
+  const handleClick = () => {
+    router.push(`/post/${post.id}`);
   };
 
   return (
-    <Card className="w-[350px]">
+    <Card className="w-[350px]" onClick={handleClick}>
       <CardHeader>
         <CardTitle>{post.title}</CardTitle>
         <CardDescription>{truncateText(post.content, 20)}</CardDescription>
       </CardHeader>
-      <CardContent></CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="default">Voir</Button>
-        <Button variant="outline" onClick={handleEdit}>
-          Modifier
-        </Button>
-        <Button variant="destructive">Supprimer</Button>
-      </CardFooter>
+      <CardContent>
+        card content a remplir avec quelque chose quelque part un jour
+      </CardContent>
     </Card>
   );
 };

@@ -2,7 +2,7 @@ import { getAllPosts } from "@/actions/postAction";
 import { getCurrentUser } from "@/actions/userAction";
 import { auth } from "@/auth";
 import CreatePostButton from "@/components/admin/CreatePostButton";
-import PostCard from "@/components/admin/PostCard";
+import AdminPostCard from "@/components/admin/AdminPostCard";
 import { redirect } from "next/navigation";
 
 const ListPostsPage = async () => {
@@ -26,7 +26,7 @@ const ListPostsPage = async () => {
 
       <div>
         {posts.map((post: Post) => (
-          <PostCard key={post.id} post={post} />
+          <AdminPostCard key={post.id} post={post} />
         ))}
       </div>
     </div>
